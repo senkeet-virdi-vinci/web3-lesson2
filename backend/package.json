@@ -7,11 +7,11 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "nodemon npm start",
+    "dev": "node --watch app.ts",
     "start": "npx prisma db update && node ./bin/www",
     "typecheck": "tsc --noEmit",
     "contract:emit": "prisma contract emit",
-    "build": "npm install && npx prisma contract emit && npx prisma db update"
+    "build": "npm install && npx prisma db update"
   },
   "dependencies": {
     "@prisma/orm-postgres": "^8.0.0-rc.12",
