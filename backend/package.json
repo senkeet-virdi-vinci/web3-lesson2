@@ -11,7 +11,7 @@
     "start": "npx prisma db update && node ./bin/www",
     "typecheck": "tsc --noEmit",
     "contract:emit": "prisma contract emit",
-    "build": "npm install && npx prisma db update",
+    "build": "npm install && npx prisma db update && node db-populate.ts",
     "seed": "node db-populate.ts"
   },
   "dependencies": {
