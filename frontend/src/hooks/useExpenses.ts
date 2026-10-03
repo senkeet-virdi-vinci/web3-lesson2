@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Expense } from '../types/Expense';
+import type { Expense, NewExpense } from '../types/Expense';
 
 const host = import.meta.env.VITE_API_URL || 'http://unknown-api-url.com';
 const API_BASE_URL = `${host}/api`;
@@ -8,7 +8,7 @@ interface UseExpensesResult {
   expenses: Expense[];
   loading: boolean;
   error: string | null;
-  addExpense: (expense: Expense) => Promise<void>;
+  addExpense: (newExpense: NewExpense) => Promise<void>;
   resetExpenses: () => Promise<void>;
 }
 
@@ -44,13 +44,13 @@ function useExpenses(): UseExpensesResult {
   }, [fetchExpenses]);
 
   const addExpense = useCallback(
-    async (expense: Expense) => {
+    async (newExpense: NewExpense) => {
       try {
         setError(null);
         const response = await fetch(`${API_BASE_URL}/expenses`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(expense),
+          body: JSON.stringify(newExpense),
         });
         if (!response.ok) {
           throw new Error(`Failed to add expense (${response.status})`);

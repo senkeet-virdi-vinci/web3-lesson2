@@ -1,49 +1,43 @@
-import { useState } from "react";
-import type { Expense } from "../types/Expense";
+import type { NewExpense } from "../types/Expense";
+import { useForm } from "react-hook-form";
 
 
 interface ExpenseAddProps {
-  addExpense: (expense: Expense) => void;
+  addExpense: (newExpense: NewExpense) => void;
+}
+
+type Inputs = {
+  payer: string,
+  date: string,
+  description: string,
+  amount : number
 }
 
 function ExpenseAdd ({addExpense} : ExpenseAddProps){
-  const [payer, setPayer] = useState<string>("Bob");
-  const [date, setDate] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [amount, setAmount] = useState<string>("");
+  const {register, handleSubmit, formState:{errors}, reset } = useForm<Inputs>()
 
-
-  const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const newExpense : Expense = {
-      id: crypto.randomUUID(),
-      payer,
-      date,
-      description,
-      amount : parseFloat(amount) || 0,
+  const onSubmit = (data: Inputs) => {
+    const newExpense : NewExpense = {
+      payer : data.payer,
+      date: data.date,
+      description: data.description,
+      amount : data.amount
     };
 
-    await addExpense(newExpense);
-
-    setPayer("Bob");
-    setDate("");
-    setDescription("");
-    setAmount("");
-
+    addExpense(newExpense);
+    reset();
   }
 
 
   return (
     <div>
       <h2>Add a new expense</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label htmlFor="payer">Payer :</label>
           <select
             id="payer"
-            value={payer}
-            onChange={(e) => setPayer(e.target.value)}
+            {...register("payer", {required:true})}
           >
             <option value="Bob">Bob</option>
             <option value="Alice">Alice</option>
@@ -52,33 +46,27 @@ function ExpenseAdd ({addExpense} : ExpenseAddProps){
 
         <div>
           <label htmlFor="date">Date :</label>
-          <input
-            id="date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-          />
+          <label>
+            Date :
+            <input type = "date" {...register('date', {required:true})}  />
+            {errors.date && <span>Date field is required </span>}
+          </label>
         </div>
 
         <div>
-          <label htmlFor="description">Description :</label>
-          <input
-            id="description"
-            type="text"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
+          <label>
+            Description :
+            <input type = "string" {...register('description', {required:true})} placeholder="Enter description" />
+            {errors.description && <span>Description field is required </span>}
+          </label>
         </div>
 
         <div>
-          <label htmlFor="amount">Amount :</label>
-          <input
-            id="amount"
-            type="number"
-            step="0.01"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
+          <label>
+            Amount:
+            <input type="number" {...register('amount', { required: true, valueAsNumber: true })} placeholder="Enter amount" />
+            {errors.amount && <span>Amount field is required</span>}
+          </label>
         </div>
 
         <button type="submit">Add Expense</button>
@@ -86,9 +74,6 @@ function ExpenseAdd ({addExpense} : ExpenseAddProps){
     </div>
   );
 
-
 }
-
-
 
 export default ExpenseAdd;
