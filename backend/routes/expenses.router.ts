@@ -24,6 +24,7 @@ expensesRouter.post("/", async (req, res) => {
     const expenses = await ExpensesService.addExpense(expense);
     res.status(201).json(expenses);
   } catch (error) {
+    console.error(error)
     res.status(500).json({ error: "Internal server error" });
   }
 });
