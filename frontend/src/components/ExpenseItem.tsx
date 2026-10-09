@@ -15,7 +15,7 @@ function ExpenseItem({ expense }: ExpenseItemProps) {
     <p>Description: {expense.description}</p>
     {/* amount must be restricted to 2 decimal places */}
     <p>Amount: {expense.amount.toFixed(2)}</p>
-    <p>Payer: {expense.payer}</p>
+    <p>Payer: {expense.payer?.name}</p>
   </div>;
 }
 

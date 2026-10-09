@@ -1,14 +1,18 @@
-
 import express from "express";
-import type { Expense } from "../types/expense.ts";
+import {z} from "zod";
+import { parseExpenseFilter, parseNewExpense, type Expense } from "../types/expense.ts";
 import { ExpensesService } from "../services/expenses.service.ts";
-import { isValidNewExpense } from "../guards/expenses.guard.ts";
+import { error } from "console";
 
 const expensesRouter = express.Router();
 
 expensesRouter.get("/", async (req, res) => {
   try {
-    const expenses = await ExpensesService.getExpenses();
+    const filter = parseExpenseFilter(req.query);
+    if(!filter) {
+      return res.status(400).json({ error: "Invalid amount" });
+    }
+    const expenses = await ExpensesService.getExpenses(filter);
     res.json(expenses);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -17,12 +21,13 @@ expensesRouter.get("/", async (req, res) => {
 
 expensesRouter.post("/", async (req, res) => {
   try {
-    const expense: Expense = req.body;
-    if (!isValidNewExpense(expense)) {
+    const expense = parseNewExpense(req.body);
+    if (!expense) {
+      console.error(error)
       return res.status(400).json({ error: "Invalid expense" });
     }
-    const expenses = await ExpensesService.addExpense(expense);
-    res.status(201).json(expenses);
+    const created = await ExpensesService.addExpense(expense);
+    res.status(201).json(created);
   } catch (error) {
     console.error(error)
     res.status(500).json({ error: "Internal server error" });

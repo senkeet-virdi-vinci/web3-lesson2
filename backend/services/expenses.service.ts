@@ -1,27 +1,22 @@
 import { Temporal } from "temporal-polyfill";
-import type { Expense, NewExpense } from "../types/expense.ts";
+import { expenseFromDBO, type Expense, type ExpenseFilter, type NewExpense } from "../types/expense.ts";
 import { db } from "../src/prisma/db.ts";
 
 export class ExpensesService {
   
-  public static async getExpenses(): Promise<Expense[]> {
-    const expenses = await db.orm.public.Expense
-    .include("payer")
-    .all();
+  public static async getExpenses(filter?: ExpenseFilter): Promise<Expense[]> {
+    const minAmount = filter?.amount;
 
-    return expenses.map((expense) => ({
-      id: expense.id,
-      date: expense.date.toString(),
-      description: expense.description,
-      amount: expense.amount,
-      payer: expense.payer.name,
-    }));
+    const query = minAmount !== undefined 
+      ? db.orm.public.Expense.where((expense) => expense.amount.gt(minAmount))
+      : db.orm.public.Expense;
+
+    const expenses = await query.include("payer").all();
+    return expenses.map(expenseFromDBO)
   }
   
   public static async addExpense(newExpense: NewExpense): Promise<Expense> {
-    const user = await db.orm.public.User.first({
-      name: newExpense.payer,
-    });
+    const user = await db.orm.public.User.first({ id: newExpense.payerId });
 
     if (!user) {
       throw new Error(`User "${newExpense.payer}" not found`);
@@ -30,29 +25,21 @@ export class ExpensesService {
     const createdExpense = await db.orm.public.Expense.create({
       description: newExpense.description,
       amount: newExpense.amount,
-      date: newExpense.date
-        ? Temporal.Instant.from(`${newExpense.date}T00:00:00Z`)
-        : Temporal.Now.instant(),
+      date: Temporal.Instant.fromEpochMilliseconds(newExpense.date.getTime()),
       payer: (payer) =>
         payer.connect({
           id: user.id,
         })
     });
 
-    return {
-      id: createdExpense.id,
-      date: createdExpense.date.toString(),
-      description: createdExpense.description,
-      amount: createdExpense.amount,
-      payer: user.name,
-    };
+    return expenseFromDBO({ ...createdExpense, payer: user });
   }
   
   public static async resetExpenses(): Promise<Expense[]> {
-    const expenses = await this.getExpenses();
+    const rows = await db.orm.public.Expense.all();
 
-    for (const expense of expenses) {
-      await db.orm.public.Expense.where({ id: expense.id }).delete();
+    for (const row of rows) {
+      await db.orm.public.Expense.where({ id: row.id }).delete();
     }
 
     return this.getExpenses();

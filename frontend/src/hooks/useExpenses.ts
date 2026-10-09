@@ -10,6 +10,7 @@ interface UseExpensesResult {
   error: string | null;
   addExpense: (newExpense: NewExpense) => Promise<void>;
   resetExpenses: () => Promise<void>;
+  searchExpenses: (amount?: number) => Promise<void>;
 }
 
 function errorMessage(error: unknown): string {
@@ -21,11 +22,15 @@ function useExpenses(): UseExpensesResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchExpenses = useCallback(async () => {
+  const fetchExpenses = useCallback(async (amount?: number) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/expenses`);
+      const url =
+      amount !== undefined
+        ? `${API_BASE_URL}/expenses?${new URLSearchParams({ amount: String(amount) })}`
+        : `${API_BASE_URL}/expenses`;
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`Failed to fetch expenses (${response.status})`);
       }
@@ -76,7 +81,7 @@ function useExpenses(): UseExpensesResult {
     }
   }, [fetchExpenses]);
 
-  return { expenses, loading, error, addExpense, resetExpenses };
+  return { expenses, loading, error, addExpense, resetExpenses, searchExpenses: fetchExpenses};
 }
 
 export default useExpenses;
