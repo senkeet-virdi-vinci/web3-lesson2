@@ -9,8 +9,14 @@ export interface Expense {
   id: string;
   date: string;
   description: string;
-  payer: User;
   amount: number;
+  payerId: number;
+  payer?: User;
 }
 
-export type NewExpense = Omit<Expense, 'id'>
+export interface NewExpense {
+  date: string;
+  description: string;
+  amount: number;
+  payerId: number;
+}
