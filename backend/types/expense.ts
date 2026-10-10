@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { userSchema } from "./user.ts";
+import { categorySchema } from "./category.ts";
 
 export const expenseSchema = z.object({
   id: z.string(),
@@ -8,9 +9,13 @@ export const expenseSchema = z.object({
   payerId: z.number(),
   payer: userSchema.optional(),
   amount: z.number().nonnegative(),
+  categoryId: z.number().nullable().optional(),
+  category: categorySchema.nullable().optional(),
 });
 
-export const newExpenseSchema = expenseSchema.omit({ id: true });
+export const newExpenseSchema = expenseSchema
+  .omit({ id: true, category: true })
+  .extend({ categoryId: z.number() });
 
 const expenseFilterSchema = z.object({
   amount: z.coerce.number().nonnegative().optional(),

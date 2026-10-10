@@ -1,0 +1,28 @@
+@server = http://localhost:3000
+@expenses = {{server}}/api/expenses
+
+### Get categories
+GET {{server}}/api/categories
+
+### Add expense with category
+POST {{expenses}}
+Content-Type: application/json
+
+{
+  "date": "2025-10-15T00:00:00Z",
+  "description": "Team lunch",
+  "payerId": 1,
+  "categoryId": 1,
+  "amount": 45.50
+}
+
+### Without categoryId : 400 
+POST {{expenses}}
+Content-Type: application/json
+
+{
+  "date": "2025-10-15T00:00:00Z",
+  "description": "No category",
+  "payerId": 1,
+  "amount": 10
+}

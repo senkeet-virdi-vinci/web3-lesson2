@@ -1,10 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { NewExpense } from "../types/Expense";
+import type { Category, NewExpense } from "../types/Expense";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 interface ExpenseAddProps {
   addExpense: (newExpense: NewExpense) => void;
+  categories: Category[];
 }
 
 const expenseSchema = z.object({
@@ -20,11 +21,13 @@ const expenseSchema = z.object({
   amount: z
     .number({ message: "Amount is required" })
     .positive("Amount must be positive"),
+  
+  categoryId: z.number({ message: "Category is required" }),
 });
 
 type Inputs = z.infer<typeof expenseSchema>;
 
-function ExpenseAdd({ addExpense }: ExpenseAddProps) {
+function ExpenseAdd({ addExpense, categories }: ExpenseAddProps) {
   const {
     register,
     handleSubmit,
@@ -35,6 +38,7 @@ function ExpenseAdd({ addExpense }: ExpenseAddProps) {
   const onSubmit = (data: Inputs) => {
     const newExpense: NewExpense = {
       payerId: data.payerId,
+      categoryId: data.categoryId,
       date: new Date(data.date).toISOString(),
       description: data.description ?? "",
       amount: data.amount,
@@ -88,6 +92,19 @@ function ExpenseAdd({ addExpense }: ExpenseAddProps) {
             />
           </label>
           {errors.amount && <span>{errors.amount.message}</span>}
+        </div>
+
+        <div>
+          <label htmlFor="category">Category :</label>
+          <select id="category" defaultValue="" {...register("categoryId", { valueAsNumber: true })}>
+            <option value="" disabled>Select a category</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          {errors.categoryId && <span>{errors.categoryId.message}</span>}
         </div>
 
         <button type="submit">Add Expense</button>

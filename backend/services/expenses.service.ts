@@ -18,7 +18,7 @@ export class ExpensesService {
       query = query.where((expense) => expense.payerId.eq(payerId));
     }
 
-    const expenses = await query.include("payer").all();
+    const expenses = await query.include("payer").include("category").all();
     return expenses.map(expenseFromDBO)
   }
   
@@ -29,17 +29,20 @@ export class ExpensesService {
       throw new Error(`User "${newExpense.payer}" not found`);
     }
 
+    const category = await db.orm.public.Category.first({ id: newExpense.categoryId });
+    if (!category) {
+      throw new Error(`Category with id ${newExpense.categoryId} not found`);
+    }
+
     const createdExpense = await db.orm.public.Expense.create({
       description: newExpense.description,
       amount: newExpense.amount,
       date: Temporal.Instant.fromEpochMilliseconds(newExpense.date.getTime()),
-      payer: (payer) =>
-        payer.connect({
-          id: user.id,
-        })
+      payer: (payer) => payer.connect({ id: user.id }),
+      category: (c) => c.connect({ id: category.id }),
     });
 
-    return expenseFromDBO({ ...createdExpense, payer: user });
+    return expenseFromDBO({ ...createdExpense, payer: user, category });
   }
   
   public static async resetExpenses(): Promise<Expense[]> {

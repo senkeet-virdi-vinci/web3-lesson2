@@ -12,6 +12,8 @@ export interface Expense {
   amount: number;
   payerId: number;
   payer?: User;
+  categoryId?: number | null;
+  category?: Category | null;
 }
 
 export interface NewExpense {
@@ -19,9 +21,16 @@ export interface NewExpense {
   description: string;
   amount: number;
   payerId: number;
+  categoryId: number;
 }
 
 export interface ExpenseFilter {
   amount?: number;
   payerId?: number;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  colour: string;
 }
