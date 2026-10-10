@@ -24,3 +24,12 @@ GET {{expenses}}?amount=30
 ### Expenses where amount is invalid
 GET {{expenses}}?amount=abc
 
+### Expenses by payer
+GET {{expenses}}?payerId=14
+
+### Expenses by payer and amount
+GET {{expenses}}?payerId=15&amount=30
+
+### Invalid payerId (400 attendu)
+GET {{expenses}}?payerId=abc
+

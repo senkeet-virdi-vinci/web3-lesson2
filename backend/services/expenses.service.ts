@@ -6,10 +6,17 @@ export class ExpensesService {
   
   public static async getExpenses(filter?: ExpenseFilter): Promise<Expense[]> {
     const minAmount = filter?.amount;
+    const payerId = filter?.payerId;
 
-    const query = minAmount !== undefined 
-      ? db.orm.public.Expense.where((expense) => expense.amount.gt(minAmount))
-      : db.orm.public.Expense;
+    let query = db.orm.public.Expense;
+
+    if (minAmount !== undefined) {
+      query = query.where((expense) => expense.amount.gt(minAmount));
+    }
+
+    if (payerId !== undefined) {
+      query = query.where((expense) => expense.payerId.eq(payerId));
+    }
 
     const expenses = await query.include("payer").all();
     return expenses.map(expenseFromDBO)

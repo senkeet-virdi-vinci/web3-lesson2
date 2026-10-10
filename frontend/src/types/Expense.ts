@@ -2,7 +2,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  bankAccount: string;
+  bankAccount: string | null;
 }
 
 export interface Expense {
@@ -19,4 +19,9 @@ export interface NewExpense {
   description: string;
   amount: number;
   payerId: number;
+}
+
+export interface ExpenseFilter {
+  amount?: number;
+  payerId?: number;
 }

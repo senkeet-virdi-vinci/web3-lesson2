@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Expense, NewExpense } from '../types/Expense';
+import type { Expense, NewExpense, ExpenseFilter } from '../types/Expense';
 
 const host = import.meta.env.VITE_API_URL || 'http://unknown-api-url.com';
 const API_BASE_URL = `${host}/api`;
@@ -10,7 +10,7 @@ interface UseExpensesResult {
   error: string | null;
   addExpense: (newExpense: NewExpense) => Promise<void>;
   resetExpenses: () => Promise<void>;
-  searchExpenses: (amount?: number) => Promise<void>;
+  searchExpenses: (filter?: ExpenseFilter) => Promise<void>;
 }
 
 function errorMessage(error: unknown): string {
@@ -22,15 +22,17 @@ function useExpenses(): UseExpensesResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchExpenses = useCallback(async (amount?: number) => {
+  const fetchExpenses = useCallback(async (filter?: ExpenseFilter) => {
     try {
       setLoading(true);
       setError(null);
-      const url =
-      amount !== undefined
-        ? `${API_BASE_URL}/expenses?${new URLSearchParams({ amount: String(amount) })}`
-        : `${API_BASE_URL}/expenses`;
-      const response = await fetch(url);
+
+      const params = new URLSearchParams();
+      if (filter?.amount !== undefined) params.set('amount', String(filter.amount));
+      if (filter?.payerId !== undefined) params.set('payerId', String(filter.payerId));
+      const query = params.toString();
+
+      const response = await fetch(`${API_BASE_URL}/expenses${query ? `?${query}` : ''}`);
       if (!response.ok) {
         throw new Error(`Failed to fetch expenses (${response.status})`);
       }

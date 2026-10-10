@@ -6,9 +6,11 @@ import useExpenses from "../hooks/useExpenses";
 import ExpenseReset from "../components/ExpenseReset";
 import ExpenseSorter from "../components/ExpenseSorter";
 import ExpenseSearchForm from "../components/ExpenseSearchForm";
+import useUsers from "../hooks/useUser";
 
 function Home() {
   const { expenses, addExpense, resetExpenses, searchExpenses } = useExpenses();
+  const {users} = useUsers();
   const [sortingAlgo, setSortingAlgo] = useState<(a: Expense, b: Expense) => number>(() => () => 1);
 
   const handleAlgoChange = (algo: (a: Expense, b: Expense) => number) => {
@@ -21,7 +23,7 @@ function Home() {
     <h1>Manage your expenses</h1>
     <ExpenseAdd addExpense={addExpense} />
     <ExpenseReset resetExpenses={resetExpenses}/>
-    <ExpenseSearchForm onSearch={searchExpenses} />
+    <ExpenseSearchForm users={users} onSearch={searchExpenses} />
     <h2>Your expenses</h2>
     {sortedExpenses.length > 0 && <ExpenseSorter setSortingAlgo={handleAlgoChange} />}
     <ul>

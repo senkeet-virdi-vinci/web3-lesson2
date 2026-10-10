@@ -1,5 +1,4 @@
 import express from "express";
-import {z} from "zod";
 import { parseExpenseFilter, parseNewExpense, type Expense } from "../types/expense.ts";
 import { ExpensesService } from "../services/expenses.service.ts";
 import { error } from "console";
