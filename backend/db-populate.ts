@@ -1,70 +1,66 @@
 import { Temporal } from "temporal-polyfill";
+import { db } from "./src/prisma/db.ts";
 
-import { db } from './src/prisma/db.ts';
+async function findOrCreateUser(name: string, email: string) {
+  const existing = await db.orm.public.User.first({ email });
+  if (existing) return existing;
+  return db.orm.public.User.create({ name, email });
+}
 
-async function resetDatabase() {
-  const transfers = await db.orm.public.Transfer.all();
-
-  for (const transfer of transfers) {
-    await db.orm.public.Transfer.where({ id: transfer.id }).delete();
-  }
-
-  const expenses = await db.orm.public.Expense.all();
-
-  for (const expense of expenses) {
-    await db.orm.public.Expense.where({ id: expense.id }).delete();
-  }
-
-  const users = await db.orm.public.User.all();
-
-  for (const user of users) {
-    await db.orm.public.User.where({ id: user.id }).delete();
-  }
+async function findOrCreateCategory(name: string, colour: string) {
+  const existing = await db.orm.public.Category.first({ name });
+  if (existing) return existing;
+  return db.orm.public.Category.create({ name, colour });
 }
 
 async function main() {
-  await resetDatabase();
+  const alice = await findOrCreateUser("Alice", "alice@gmail.com");
+  const bob = await findOrCreateUser("Bob", "bob@gmail.com");
 
-  const alice = await db.orm.public.User.create({
-    name: "Alice",
-    email: "alice@gmail.com",
-  });
+  const food = await findOrCreateCategory("Food", "#e67e22");
+  const transport = await findOrCreateCategory("Transport", "#3498db");
+  const leisure = await findOrCreateCategory("Leisure", "#9b59b6");
+  const housing = await findOrCreateCategory("Housing", "#2ecc71");
 
-  const bob = await db.orm.public.User.create({
-    name: "Bob",
-    email: "bob@gmail.com",
-  });
+  const existingExpenses = await db.orm.public.Expense.all();
 
-  const expense1 = await db.orm.public.Expense.create({
-    date: Temporal.Instant.from("2025-01-16T00:00:00Z"),
-    description: "Example expense #1 from Alice",
-    amount: 25.5,
-    payer: (payer) => payer.connect({ id: alice.id }),
-  });
+  if (existingExpenses.length === 0) {
+    await db.orm.public.Expense.create({
+      date: Temporal.Instant.from("2025-01-16T00:00:00Z"),
+      description: "Example expense #1 from Alice",
+      amount: 25.5,
+      payer: (payer) => payer.connect({ id: alice.id }),
+      category: (category) => category.connect({ id: food.id }),
+    });
 
-  const expense2 = await db.orm.public.Expense.create({
-    date: Temporal.Instant.from("2025-01-15T00:00:00Z"),
-    description: "Example expense #2 from Bob",
-    amount: 35,
-    payer: (payer) => payer.connect({ id: bob.id }),
-  });
+    await db.orm.public.Expense.create({
+      date: Temporal.Instant.from("2025-01-15T00:00:00Z"),
+      description: "Example expense #2 from Bob",
+      amount: 35,
+      payer: (payer) => payer.connect({ id: bob.id }),
+      category: (category) => category.connect({ id: transport.id }),
+    });
 
-  const expense3 = await db.orm.public.Expense.create({
-    date: Temporal.Instant.from("2025-01-15T00:00:00Z"),
-    description: "Example expense #3 from Alice",
-    amount: 2,
-    payer: (payer) => payer.connect({ id: alice.id }),
-  });
+    await db.orm.public.Expense.create({
+      date: Temporal.Instant.from("2025-01-15T00:00:00Z"),
+      description: "Example expense #3 from Alice",
+      amount: 2,
+      payer: (payer) => payer.connect({ id: alice.id }),
+    });
 
-  const transfer = await db.orm.public.Transfer.create({
-    amount: 10,
-    source: (source) => source.connect({ id: alice.id }),
-    target: (target) => target.connect({ id: bob.id }),
-  });
+    await db.orm.public.Transfer.create({
+      amount: 10,
+      source: (source) => source.connect({ id: alice.id }),
+      target: (target) => target.connect({ id: bob.id }),
+    });
 
-  console.log("Utilisateurs créés :", alice, bob);
-  console.log("Dépenses créées :", expense1, expense2, expense3);
-  console.log("Transaction créée :", transfer);
+    console.log("Dépenses d'exemple créées.");
+  } else {
+    console.log(`${existingExpenses.length} dépense(s) déjà présentes, rien n'est modifié.`);
+  }
+
+  console.log("Utilisateurs :", alice, bob);
+  console.log("Catégories :", food, transport, leisure, housing);
 }
 
 main()
