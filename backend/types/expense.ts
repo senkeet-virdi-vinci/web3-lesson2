@@ -20,6 +20,7 @@ export const newExpenseSchema = expenseSchema
 const expenseFilterSchema = z.object({
   amount: z.coerce.number().nonnegative().optional(),
   payerId: z.coerce.number().int().nonnegative().optional(),
+  categoryId: z.coerce.number().int().nonnegative().optional(),
 });
 
 function parseWithSchema<T>(schema: z.ZodType<T>, data: unknown): T | false {

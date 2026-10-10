@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Expense, NewExpense, ExpenseFilter } from '../types/Expense';
 
 const host = import.meta.env.VITE_API_URL || 'http://unknown-api-url.com';
@@ -22,7 +22,11 @@ function useExpenses(): UseExpensesResult {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const filterRef = useRef<ExpenseFilter | undefined>(undefined);
+  const requestIdRef = useRef(0);
+
   const fetchExpenses = useCallback(async (filter?: ExpenseFilter) => {
+    const requestId = ++requestIdRef.current;
     try {
       setLoading(true);
       setError(null);
@@ -30,6 +34,7 @@ function useExpenses(): UseExpensesResult {
       const params = new URLSearchParams();
       if (filter?.amount !== undefined) params.set('amount', String(filter.amount));
       if (filter?.payerId !== undefined) params.set('payerId', String(filter.payerId));
+      if (filter?.categoryId !== undefined) params.set('categoryId', String(filter.categoryId));
       const query = params.toString();
 
       const response = await fetch(`${API_BASE_URL}/expenses${query ? `?${query}` : ''}`);
@@ -37,15 +42,26 @@ function useExpenses(): UseExpensesResult {
         throw new Error(`Failed to fetch expenses (${response.status})`);
       }
       const data = (await response.json()) as Expense[];
+
+      // Réponse périmée : une requête plus récente a été lancée entre-temps.
+      if (requestId !== requestIdRef.current) return;
       setExpenses(data);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       setError(errorMessage(err));
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, []);
 
-  // Runs once on mount to load the initial expense list.
+  const searchExpenses = useCallback(
+    (filter?: ExpenseFilter) => {
+      filterRef.current = filter;
+      return fetchExpenses(filter);
+    },
+    [fetchExpenses],
+  );
+
   useEffect(() => {
     fetchExpenses();
   }, [fetchExpenses]);
@@ -62,7 +78,7 @@ function useExpenses(): UseExpensesResult {
         if (!response.ok) {
           throw new Error(`Failed to add expense (${response.status})`);
         }
-        await fetchExpenses();
+        await fetchExpenses(filterRef.current);
       } catch (err) {
         setError(errorMessage(err));
       }
@@ -77,13 +93,13 @@ function useExpenses(): UseExpensesResult {
       if (!response.ok) {
         throw new Error(`Failed to reset expenses (${response.status})`);
       }
-      await fetchExpenses();
+      await fetchExpenses(filterRef.current);
     } catch (err) {
       setError(errorMessage(err));
     }
   }, [fetchExpenses]);
 
-  return { expenses, loading, error, addExpense, resetExpenses, searchExpenses: fetchExpenses};
+  return { expenses, loading, error, addExpense, resetExpenses, searchExpenses };
 }
 
 export default useExpenses;

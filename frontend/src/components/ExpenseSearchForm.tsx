@@ -1,20 +1,23 @@
 import { useState } from 'react';
-import type { ExpenseFilter, User } from '../types/Expense';
+import type { Category, ExpenseFilter, User } from '../types/Expense';
 
 interface ExpenseSearchFormProps {
   users: User[];
+  categories: Category[];
   onSearch: (filter: ExpenseFilter) => void;
 }
 
-function ExpenseSearchForm({ users, onSearch }: ExpenseSearchFormProps) {
+function ExpenseSearchForm({ users, categories, onSearch }: ExpenseSearchFormProps) {
   const [amount, setAmount] = useState('');
   const [payerId, setPayerId] = useState('');
+  const [categoryId, setCategoryId] = useState('');
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onSearch({
       amount: amount === '' ? undefined : Number(amount),
       payerId: payerId === '' ? undefined : Number(payerId),
+      categoryId: categoryId === '' ? undefined : Number(categoryId),
     });
   };
 
@@ -46,6 +49,22 @@ function ExpenseSearchForm({ users, onSearch }: ExpenseSearchFormProps) {
             {users.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="search-category">Category:</label>
+          <select
+            id="search-category"
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+          >
+            <option value="">All categories</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>

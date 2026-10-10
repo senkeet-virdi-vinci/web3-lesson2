@@ -27,6 +27,7 @@ export interface NewExpense {
 export interface ExpenseFilter {
   amount?: number;
   payerId?: number;
+  categoryId?: number;
 }
 
 export interface Category {

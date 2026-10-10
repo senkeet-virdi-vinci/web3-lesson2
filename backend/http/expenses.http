@@ -33,3 +33,13 @@ GET {{expenses}}?payerId=15&amount=30
 ### Invalid payerId (400 attendu)
 GET {{expenses}}?payerId=abc
 
+
+### Expenses by category
+GET {{expenses}}?categoryId=1
+
+### Category + payer + amount
+GET {{expenses}}?categoryId=1&payerId=2&amount=10
+
+### Invalid categoryId (400 attendu)
+GET {{expenses}}?categoryId=abc
+

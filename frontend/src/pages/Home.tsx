@@ -11,7 +11,7 @@ import useCategories from "../hooks/useCategories";
 
 
 function Home() {
-  const { expenses, addExpense, resetExpenses, searchExpenses } = useExpenses();
+  const { expenses, error, addExpense, resetExpenses, searchExpenses } = useExpenses();
   const {users} = useUsers();
   const [sortingAlgo, setSortingAlgo] = useState<(a: Expense, b: Expense) => number>(() => () => 1);
   const { categories } = useCategories();
@@ -26,8 +26,9 @@ function Home() {
     <h1>Manage your expenses</h1>
     <ExpenseAdd addExpense={addExpense} categories={categories} />
     <ExpenseReset resetExpenses={resetExpenses}/>
-    <ExpenseSearchForm users={users} onSearch={searchExpenses} />
+    <ExpenseSearchForm users={users} categories={categories} onSearch={searchExpenses} />
     <h2>Your expenses</h2>
+    {error && <p style={{ color: 'red' }}>{error}</p>}
     {sortedExpenses.length > 0 && <ExpenseSorter setSortingAlgo={handleAlgoChange} />}
     <ul>
       {sortedExpenses.map((expense) => (
