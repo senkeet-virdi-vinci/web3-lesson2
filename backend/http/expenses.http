@@ -10,8 +10,8 @@ Content-Type: application/json
 
 {
   "date": "2025-11-30T00:00:00Z",
-  "description": "Team lunch 2",
-  "payerId": 12,
+  "description": "Team lunch 3",
+  "payerId": 2,
   "amount": 25.55
 }
 

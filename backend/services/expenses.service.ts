@@ -40,26 +40,40 @@ export class ExpensesService {
     
   public static async addExpense(newExpense: NewExpense): Promise<Expense> {
     const user = await db.orm.public.User.first({ id: newExpense.payerId });
-
     if (!user) {
-      throw new Error(`User "${newExpense.payer}" not found`);
+      throw new Error(`User with id ${newExpense.payerId} not found`);
     }
 
-    const category = await db.orm.public.Category.first({ id: newExpense.categoryId });
-    if (!category) {
-      throw new Error(`Category with id ${newExpense.categoryId} not found`);
+    let category = null;
+    if (newExpense.categoryId != null) {
+      category = await db.orm.public.Category.first({ id: newExpense.categoryId });
+      if (!category) {
+        throw new Error(`Category with id ${newExpense.categoryId} not found`);
+      }
     }
 
-    const createdExpense = await db.orm.public.Expense.create({
+    const created = await db.orm.public.Expense.create({
       description: newExpense.description,
       amount: newExpense.amount,
       date: Temporal.Instant.fromEpochMilliseconds(newExpense.date.getTime()),
       payer: (payer) => payer.connect({ id: user.id }),
-      category: (c) => c.connect({ id: category.id }),
+      ...(category
+        ? { category: (c: any) => c.connect({ id: category.id }) }
+        : {}),
     });
 
-    return expenseFromDBO({ ...createdExpense, payer: user, category });
+    for (const userId of newExpense.participants) {
+      await db.orm.public.ExpenseUser.create({
+        expenseId: created.id,
+        userId,
+        expense: (expense) => expense.connect({ id: created.id }),
+        user: (u) => u.connect({ id: userId }),
+      });
   }
+
+  // On relit la dépense complète (payeur, catégorie, participants)
+  return (await this.getExpenseById(created.id))!;
+}
   
   public static async resetExpenses(): Promise<Expense[]> {
     const rows = await db.orm.public.Expense.all();

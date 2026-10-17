@@ -4,7 +4,7 @@ import { categorySchema } from "./category.ts";
 
 export const expenseSchema = z.object({
   id: z.string(),
-  date: z.iso.datetime({ offset: true }).pipe(z.coerce.date()),
+  date: z.union([z.iso.datetime({ offset: true }), z.iso.date()]).pipe(z.coerce.date()),
   description: z.string().max(200),
   payerId: z.number(),
   payer: userSchema.optional(),
@@ -14,8 +14,11 @@ export const expenseSchema = z.object({
 });
 
 export const newExpenseSchema = expenseSchema
-  .omit({ id: true, category: true })
-  .extend({ categoryId: z.number() });
+  .omit({ id: true, payer: true, category: true})
+  .extend({
+    categoryId: z.number().nullable().optional(),
+    participants: z.array(z.number()).default([]),
+});
 
 const expenseFilterSchema = z.object({
   amount: z.coerce.number().nonnegative().optional(),
