@@ -18,21 +18,26 @@ function ExpenseItem({ expense }: ExpenseItemProps) {
       <p>Amount: {expense.amount.toFixed(2)}</p>
       <p>Date: {new Date(expense.date).toLocaleDateString()}</p>
       <p>Payer Name: {expense.payer?.name}</p>
-      <h2>Category</h2>
-            {expense.category ? (
-                <span
-                style={{
-                    backgroundColor: expense.category.colour,
-                    color: '#fff',
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                }}
-                >
-                {expense.category.name}
-                </span>
-            ) : (
-                <p>None</p>
-            )}
+      <p>
+      Category:{' '}
+      {expense.category ? (
+        <>
+          <span
+            style={{
+              display: 'inline-block',
+              width: '10px',
+              height: '10px',
+              borderRadius: '50%',
+              backgroundColor: expense.category.colour,
+              marginRight: '6px',
+            }}
+          />
+          {expense.category.name}
+        </>
+      ) : (
+        'None'
+      )}
+    </p>
 
       
     </div>
