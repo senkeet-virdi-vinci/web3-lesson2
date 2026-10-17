@@ -1,113 +1,97 @@
-import { zodResolver } from "@hookform/resolvers/zod";
-import type { Category, NewExpense } from "../types/Expense";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import type { NewExpense } from "../types/Expense";
+import { ExpenseFormSchema, type ExpenseFormValues } from "../types/Expense";
+import useCategories from "../hooks/useCategories";
+import useUsers from "../hooks/useUser";
 
 interface ExpenseAddProps {
-  addExpense: (newExpense: NewExpense) => void;
-  categories: Category[];
+  expenseAdd: (expense: NewExpense) => Promise<void>;
 }
 
-const expenseSchema = z.object({
-  payerId: z.number({ message: "Payer is required" }),
-
-  date: z.string().min(1, "Date is required"),
-
-  description: z
-    .string()
-    .max(200, "Description cannot exceed 200 characters")
-    .optional(),
-
-  amount: z
-    .number({ message: "Amount is required" })
-    .positive("Amount must be positive"),
-  
-  categoryId: z.number({ message: "Category is required" }),
-});
-
-type Inputs = z.infer<typeof expenseSchema>;
-
-function ExpenseAdd({ addExpense, categories }: ExpenseAddProps) {
+function ExpenseAdd({ expenseAdd }: ExpenseAddProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors },
     reset,
-  } = useForm<Inputs>({ resolver: zodResolver(expenseSchema) });
+    formState: { errors },
+  } = useForm<ExpenseFormValues>({
+    resolver: zodResolver(ExpenseFormSchema),
+  });
+  const { categories, loading: categoriesLoading } = useCategories();
+  const { users, loading: usersLoading } = useUsers();
 
-  const onSubmit = (data: Inputs) => {
+  const onSubmit = async (data: ExpenseFormValues) => {
     const newExpense: NewExpense = {
+      description: data.description,
       payerId: data.payerId,
-      categoryId: data.categoryId,
-      date: new Date(data.date).toISOString(),
-      description: data.description ?? "",
       amount: data.amount,
+      // Date ISO complète : le backend actuel refuse "YYYY-MM-DD" seul.
+      date: new Date(data.date).toISOString(),
+      participants: data.participantsRaw
+        ? data.participantsRaw
+            .split(",")
+            .map((s) => parseInt(s.trim(), 10))
+            .filter((n) => !isNaN(n))
+        : [],
+      categoryId: data.categoryId,
     };
-
-    addExpense(newExpense);
+    await expenseAdd(newExpense);
     reset();
   };
 
   return (
     <div>
-      <h2>Add a new expense</h2>
+      <h2>Add expense</h2>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label htmlFor="payer">Payer :</label>
-          <select id="payer" {...register("payerId", { valueAsNumber: true })}>
-            <option value={1}>Bob</option>
-            <option value={2}>Alice</option>
-          </select>
-          {errors.payerId && <span>{errors.payerId.message}</span>}
-        </div>
+        <input type="text" {...register("description")} placeholder="Description" />
+        {errors.description && <span>{errors.description.message}</span>}
 
-        <div>
-          <label>
-            Date :
-            <input type="date" {...register("date")} />
-          </label>
-          {errors.date && <span>{errors.date.message}</span>}
-        </div>
-
-        <div>
-          <label>
-            Description :
-            <input
-              type="text"
-              {...register("description")}
-              placeholder="Enter description"
-            />
-          </label>
-          {errors.description && <span>{errors.description.message}</span>}
-        </div>
-
-        <div>
-          <label>
-            Amount :
-            <input
-              type="number"
-              step="any"
-              {...register("amount", { valueAsNumber: true })}
-              placeholder="Enter amount"
-            />
-          </label>
-          {errors.amount && <span>{errors.amount.message}</span>}
-        </div>
-
-        <div>
-          <label htmlFor="category">Category :</label>
-          <select id="category" defaultValue="" {...register("categoryId", { valueAsNumber: true })}>
-            <option value="" disabled>Select a category</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
+        <select {...register("payerId", { valueAsNumber: true })}>
+          <option value="">Select payer</option>
+          {!usersLoading &&
+            users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name}
               </option>
             ))}
-          </select>
-          {errors.categoryId && <span>{errors.categoryId.message}</span>}
-        </div>
+        </select>
+        {errors.payerId && <span>{errors.payerId.message}</span>}
 
-        <button type="submit">Add Expense</button>
+        <input
+          type="number"
+          step="0.01"
+          {...register("amount", { valueAsNumber: true })}
+          placeholder="Amount"
+        />
+        {errors.amount && <span>{errors.amount.message}</span>}
+
+        <input type="date" {...register("date")} placeholder="Date" />
+        {errors.date && <span>{errors.date.message}</span>}
+
+        <input
+          type="text"
+          {...register("participantsRaw")}
+          placeholder="Participant IDs (comma-separated)"
+        />
+        {errors.participantsRaw && <span>{errors.participantsRaw.message}</span>}
+
+        <select
+          {...register("categoryId", {
+            setValueAs: (v) => (v === "" ? undefined : parseInt(v, 10)),
+          })}
+        >
+          <option value="">No category</option>
+          {!categoriesLoading &&
+            categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+        </select>
+        {errors.categoryId && <span>{errors.categoryId.message}</span>}
+
+        <button type="submit">Add</button>
       </form>
     </div>
   );
