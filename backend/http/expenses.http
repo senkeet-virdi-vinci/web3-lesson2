@@ -43,3 +43,10 @@ GET {{expenses}}?categoryId=1&payerId=2&amount=10
 ### Invalid categoryId (400 attendu)
 GET {{expenses}}?categoryId=abc
 
+
+### Get an expense by its id
+GET {{expenses}}/4
+
+### Get an expense by its id (404)
+GET {{expenses}}/9999
+

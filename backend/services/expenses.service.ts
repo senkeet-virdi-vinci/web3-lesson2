@@ -26,6 +26,17 @@ export class ExpensesService {
     const expenses = await query.include("payer").include("category").all();
     return expenses.map(expenseFromDBO)
   }
+
+  public static async getExpenseById(id: number): Promise<Expense | undefined> {
+    const row = await db.orm.public.Expense
+    .where((expense) => expense.id.eq(id))
+    .include("payer")
+    .include("category")
+    .include("participants")
+    .first();
+
+    return row ? expenseFromDBO(row) : undefined;
+  }
     
   public static async addExpense(newExpense: NewExpense): Promise<Expense> {
     const user = await db.orm.public.User.first({ id: newExpense.payerId });

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { User } from '../types/Expense';
+import { apiRequest } from '../lib/rest';
 
-const host = import.meta.env.VITE_API_URL || 'http://unknown-api-url.com';
-const API_BASE_URL = `${host}/api`;
 
 interface UseUsersResult {
   users: User[];
@@ -12,6 +11,7 @@ interface UseUsersResult {
 }
 
 function errorMessage(error: unknown): string {
+  if (error instanceof Response) return `Request failed (${error.status})`;
   return error instanceof Error ? error.message : 'Unknown error';
 }
 
@@ -24,12 +24,7 @@ function useUsers(): UseUsersResult {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`${API_BASE_URL}/users`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch users (${response.status})`);
-      }
-      const data = (await response.json()) as User[];
-      setUsers(data);
+      setUsers(await apiRequest<User[]>('/api/users'));
     } catch (err) {
       setError(errorMessage(err));
     } finally {

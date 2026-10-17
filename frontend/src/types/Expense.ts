@@ -14,6 +14,7 @@ export interface Expense {
   payer?: User;
   categoryId?: number | null;
   category?: Category | null;
+  participants?: User[];
 }
 
 export interface NewExpense {

@@ -1,30 +1,42 @@
-import { useState } from 'react';
-import type { Category, ExpenseFilter, User } from '../types/Expense';
+import { useForm } from 'react-hook-form';
+import { useSearchParams } from 'react-router';
+import type { Category, User } from '../types/Expense';
 
-interface ExpenseSearchFormProps {
-  users: User[];
-  categories: Category[];
-  onSearch: (filter: ExpenseFilter) => void;
+interface SearchFormValues {
+  amount?: number;
+  payerId?: string;
+  categoryId?: string;
 }
 
-function ExpenseSearchForm({ users, categories, onSearch }: ExpenseSearchFormProps) {
-  const [amount, setAmount] = useState('');
-  const [payerId, setPayerId] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+interface ExpenseSearchProps {
+  users: User[];
+  categories: Category[];
+}
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    onSearch({
-      amount: amount === '' ? undefined : Number(amount),
-      payerId: payerId === '' ? undefined : Number(payerId),
-      categoryId: categoryId === '' ? undefined : Number(categoryId),
-    });
+function ExpenseSearch({ users, categories }: ExpenseSearchProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const { register, handleSubmit } = useForm<SearchFormValues>({
+    defaultValues: {
+      amount: searchParams.get('amount') ? Number(searchParams.get('amount')) : undefined,
+      payerId: searchParams.get('payerId') ?? '',
+      categoryId: searchParams.get('categoryId') ?? '',
+    },
+  });
+
+  const onSubmit = (data: SearchFormValues) => {
+    const filter: Record<string, string> = {};
+    if (data.amount) filter.amount = String(data.amount);
+    if (data.payerId) filter.payerId = data.payerId;
+    if (data.categoryId) filter.categoryId = data.categoryId;
+
+    setSearchParams(filter);
   };
 
   return (
     <div>
       <h2>Search expenses</h2>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label htmlFor="search-amount">Amount greater than:</label>
           <input
@@ -32,19 +44,14 @@ function ExpenseSearchForm({ users, categories, onSearch }: ExpenseSearchFormPro
             type="number"
             min="0"
             step="any"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter amount"
+            {...register('amount', { valueAsNumber: true })}
           />
         </div>
 
         <div>
           <label htmlFor="search-payer">Payer:</label>
-          <select
-            id="search-payer"
-            value={payerId}
-            onChange={(e) => setPayerId(e.target.value)}
-          >
+          <select id="search-payer" {...register('payerId')}>
             <option value="">All users</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
@@ -56,11 +63,7 @@ function ExpenseSearchForm({ users, categories, onSearch }: ExpenseSearchFormPro
 
         <div>
           <label htmlFor="search-category">Category:</label>
-          <select
-            id="search-category"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-          >
+          <select id="search-category" {...register('categoryId')}>
             <option value="">All categories</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -76,4 +79,4 @@ function ExpenseSearchForm({ users, categories, onSearch }: ExpenseSearchFormPro
   );
 }
 
-export default ExpenseSearchForm;
+export default ExpenseSearch;

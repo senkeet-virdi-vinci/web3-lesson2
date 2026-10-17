@@ -43,7 +43,6 @@ function useExpenses(): UseExpensesResult {
       }
       const data = (await response.json()) as Expense[];
 
-      // Réponse périmée : une requête plus récente a été lancée entre-temps.
       if (requestId !== requestIdRef.current) return;
       setExpenses(data);
     } catch (err) {
