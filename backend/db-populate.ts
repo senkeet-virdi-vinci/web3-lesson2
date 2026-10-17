@@ -13,9 +13,21 @@ async function findOrCreateCategory(name: string, colour: string) {
   return db.orm.public.Category.create({ name, colour });
 }
 
+async function addParticipant(expenseId: number, userId: number) {
+  const existing = await db.orm.public.ExpenseUser.first({ expenseId, userId });
+  if (existing) return existing;
+  return db.orm.public.ExpenseUser.create({
+    expenseId,
+    userId,
+    expense: (expense) => expense.connect({ id: expenseId }),
+    user: (user) => user.connect({ id: userId }),
+  });
+}
+
 async function main() {
   const alice = await findOrCreateUser("Alice", "alice@gmail.com");
   const bob = await findOrCreateUser("Bob", "bob@gmail.com");
+  const jules = await findOrCreateUser("Jules", "jules@gmail.com");
 
   const food = await findOrCreateCategory("Food", "#e67e22");
   const transport = await findOrCreateCategory("Transport", "#3498db");
@@ -59,8 +71,26 @@ async function main() {
     console.log(`${existingExpenses.length} dépense(s) déjà présentes, rien n'est modifié.`);
   }
 
-  console.log("Utilisateurs :", alice, bob);
+
+  const expense1 = await db.orm.public.Expense.first({
+    description: "Example expense #1 from Alice",
+  });
+  const expense2 = await db.orm.public.Expense.first({
+    description: "Example expense #2 from Bob",
+  });
+
+  if (expense1) {
+    await addParticipant(expense1.id, bob.id);
+    await addParticipant(expense1.id, jules.id);
+  }
+  if (expense2) {
+    await addParticipant(expense2.id, alice.id);
+    await addParticipant(expense2.id, jules.id);
+  }
+
+  console.log("Utilisateurs :", alice, bob, jules);
   console.log("Catégories :", food, transport, leisure, housing);
+  console.log("Participants ajoutés aux dépenses #1 et #2.");
 }
 
 main()
