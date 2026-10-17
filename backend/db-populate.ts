@@ -1,10 +1,18 @@
 import { Temporal } from "temporal-polyfill";
 import { db } from "./src/prisma/db.ts";
 
-async function findOrCreateUser(name: string, email: string) {
+async function findOrCreateUser(name: string, email: string, bankAccount?: string) {
   const existing = await db.orm.public.User.first({ email });
-  if (existing) return existing;
-  return db.orm.public.User.create({ name, email });
+
+  if (existing) {
+    if (bankAccount && existing.bankAccount !== bankAccount) {
+      await db.orm.public.User.where({ id: existing.id }).update({ bankAccount });
+      return { ...existing, bankAccount };
+    }
+    return existing;
+  }
+
+  return db.orm.public.User.create({ name, email, bankAccount });
 }
 
 async function findOrCreateCategory(name: string, colour: string) {
@@ -25,9 +33,9 @@ async function addParticipant(expenseId: number, userId: number) {
 }
 
 async function main() {
-  const alice = await findOrCreateUser("Alice", "alice@gmail.com");
+  const alice = await findOrCreateUser("Alice", "alice@gmail.com", "BE68 5390 0754 7034");
   const bob = await findOrCreateUser("Bob", "bob@gmail.com");
-  const jules = await findOrCreateUser("Jules", "jules@gmail.com");
+  const jules = await findOrCreateUser("Jules", "jules@gmail.com", "BE71 0961 2345 6769");
 
   const food = await findOrCreateCategory("Food", "#e67e22");
   const transport = await findOrCreateCategory("Transport", "#3498db");
