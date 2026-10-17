@@ -2,11 +2,11 @@ import { useLoaderData, useSearchParams } from 'react-router';
 import ExpenseItem from '../../components/ExpenseItem';
 import useCategories from '../../hooks/useCategories';
 import useUsers from '../../hooks/useUser';
-import type { Expense } from '../../types/Expense';
+import type { ExpenseListItem } from '../../types/Expense';
 import ExpenseSearch from '../../components/ExpenseSearchForm';
 
 export default function ExpenseList() {
-  const expenses = useLoaderData() as Expense[];
+  const expenses = useLoaderData() as ExpenseListItem[];
   const [searchParams] = useSearchParams();
   const { users } = useUsers();
   const { categories } = useCategories();

@@ -17,6 +17,15 @@ export interface Expense {
   participants?: User[];
 }
 
+export interface ExpenseListItem {
+  id: string;
+  description: string;
+  amount: number;
+  date: string;
+  payer?: { id: number; name: string };
+  category?: { id: number; name: string; colour: string } | null;
+}
+
 export interface NewExpense {
   date: string;
   description: string;

@@ -1,19 +1,37 @@
 import express from "express";
 import { parseExpenseFilter, parseNewExpense, type Expense } from "../types/expense.ts";
 import { ExpensesService } from "../services/expenses.service.ts";
-import { error } from "console";
 
 const expensesRouter = express.Router();
 
 expensesRouter.get("/", async (req, res) => {
   try {
     const filter = parseExpenseFilter(req.query);
-    if(!filter) {
+    if (!filter) {
       return res.status(400).json({ error: "Invalid amount" });
     }
     const expenses = await ExpensesService.getExpenses(filter);
-    res.json(expenses);
+
+    res.json(
+      expenses.map((expense) => ({
+        id: expense.id,
+        description: expense.description,
+        amount: expense.amount,
+        date: expense.date,
+        payer: expense.payer
+          ? { id: expense.payer.id, name: expense.payer.name }
+          : undefined,
+        category: expense.category
+          ? {
+              id: expense.category.id,
+              name: expense.category.name,
+              colour: expense.category.colour,
+            }
+          : null,
+      })),
+    );
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -38,7 +56,6 @@ expensesRouter.post("/", async (req, res) => {
   try {
     const expense = parseNewExpense(req.body);
     if (!expense) {
-      console.error(error)
       return res.status(400).json({ error: "Invalid expense" });
     }
     const created = await ExpensesService.addExpense(expense);
