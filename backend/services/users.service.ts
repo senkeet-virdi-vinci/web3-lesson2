@@ -1,4 +1,4 @@
-import type { User, UserFilter } from "../types/user.ts";
+import { userFromDBO, type User, type UserFilter } from "../types/user.ts";
 import { db } from "../src/prisma/db.ts";
 
 export class UsersService {
@@ -13,6 +13,11 @@ export class UsersService {
         const users = await query.all();
 
         return users;
+    }
+
+     public static async getById(id: number): Promise<User | undefined> {
+        const row = await db.orm.public.User.where({ id }).first();
+        return row ? userFromDBO(row) : undefined;
     }
 
 }

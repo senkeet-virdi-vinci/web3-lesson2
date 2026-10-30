@@ -11,10 +11,11 @@ export const expenseSchema = z.object({
   amount: z.number().nonnegative(),
   categoryId: z.number().nullable().optional(),
   category: categorySchema.nullable().optional(),
+  participants: z.array(userSchema).default([]),
 });
 
 export const newExpenseSchema = expenseSchema
-  .omit({ id: true, payer: true, category: true})
+  .omit({ id: true, payer: true, category: true, participants: true})
   .extend({
     categoryId: z.number().nullable().optional(),
     participants: z.array(z.number()).default([]),
@@ -50,5 +51,6 @@ export function expenseFromDBO(dbo: any): Expense {
       ...dbo,
       id: dbo.id.toString(),
       date: new Date(dbo.date.toString()),
+      participants: dbo.participants ?? [],
   };
 }

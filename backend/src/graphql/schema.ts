@@ -4,14 +4,17 @@ import { CategoriesService } from '../../services/categories.service.ts';
 import { ExpensesService } from '../../services/expenses.service.ts';
 import { parseNewExpense, type Expense } from '../../types/expense.ts';
 import { GraphQLError } from 'graphql/error';
+import type { GraphQLContext } from '../../types/GraphQLContext.ts';
+import { requireAuth } from './authHelper.ts';
 
-export const schema = createSchema({
+export const schema = createSchema<GraphQLContext>({
   typeDefs: /* GraphQL */ `
   type User {
     id: Int!
     name: String!
     email: String!
     bankAccount: String
+    expenses(filter: ExpenseFilter): [Expense!]!
   }
 
   type Category {
@@ -37,6 +40,7 @@ export const schema = createSchema({
   }
 
   type Query {
+    me: User
     expenses(filter: ExpenseFilter): [Expense!]!
     expense(id: Int!): Expense
     users: [User!]!
@@ -62,18 +66,73 @@ resolvers: {
     date: (expense: Expense) => expense.date.toISOString(),
     },
     Query: {
-      expenses: (_parent, args) => ExpensesService.getExpenses(args.filter ?? {}),
-      users: () => UsersService.getUsers(),
-      expense: (_parent, args) => ExpensesService.getExpenseById(args.id),
-      categories: () => CategoriesService.getCategories(),
+      me: (_parent, _args, ctx) =>
+        ctx.userJWT ? UsersService.getById(ctx.userJWT.userId) : null,
+
+      expenses: (user, args, ctx) => {
+        const current = requireAuth(ctx);
+        // ...refuse unless user.id is the caller's own id
+        return ExpensesService.getExpensesOfUser(user.id, args.filter ?? {});
+      },
+      expense: async (_parent, args, ctx) => {
+        const user = requireAuth(ctx);
+
+        const expense = await ExpensesService.getExpenseById(args.id);
+
+        if (!expense) {
+          throw new GraphQLError('Expense not found', {
+            extensions: { code: 'NOT_FOUND' },
+          });
+        }
+
+        // Check if user is involved in this expense (as payer or participant)
+        const isInvolved =
+          expense.payer?.id === user.userId ||
+          expense.participants.some(p => p.id === user.userId);
+
+        if (!isInvolved) {
+          throw new GraphQLError("You don't have permission to view this expense", {
+            extensions: { code: 'FORBIDDEN' },
+          });
+        }
+
+        return expense;
+      },
+
+      // Same question, same answer. `users` hands out names, emails and bank
+      // accounts; `categories` is harmless, but a stranger has no business
+      // enumerating either.
+      users: (_parent, _args, ctx) => {
+        requireAuth(ctx);
+        return UsersService.getUsers();
+      },
+      categories: (_parent, _args, ctx) => {
+        requireAuth(ctx);
+        return CategoriesService.getCategories();
+      },
     },
     Mutation: {
-      createExpense: (_parent, args) => {
+      createExpense: async (_parent, args, ctx) => {
+        const user = requireAuth(ctx);
+
+        // User can only create expenses where they are the payer
+        if (user.userId !== args.input.payerId) {
+          throw new GraphQLError('You can only create expenses that you paid for', {
+            extensions: { code: 'FORBIDDEN' },
+          });
+        }
+
         const newExpense = parseNewExpense(args.input);
         if (newExpense === false) {
           throw new GraphQLError('Invalid expense');
         }
         return ExpensesService.addExpense(newExpense);
+      },
+    },
+    User: {
+      expenses: (user, args, ctx) => {
+        requireAuth(ctx);
+        return ExpensesService.getExpensesOfUser(user.id, args.filter ?? {});
       },
     },
   },

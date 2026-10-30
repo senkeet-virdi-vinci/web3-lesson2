@@ -7,8 +7,8 @@ POST {{auth}}/register
 Content-Type: application/json
 
 {
-  "name": "Test User",
-  "email": "test@example.com",
+  "name": "John",
+  "email": "john@mail.com",
   "password": "topsecret123"
 }
 
@@ -17,8 +17,8 @@ POST {{auth}}/register
 Content-Type: application/json
 
 {
-  "name": "Test User",
-  "email": "test@example.com",
+  "name": "John",
+  "email": "john@mail.com",
   "password": "topsecret123"
 }
 
