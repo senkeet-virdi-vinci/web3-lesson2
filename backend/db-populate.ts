@@ -1,7 +1,10 @@
 import { Temporal } from "temporal-polyfill";
 import { db } from "./src/prisma/db.ts";
+import bcrypt from 'bcrypt';
 
-async function findOrCreateUser(name: string, email: string, bankAccount?: string) {
+const DEMO_PASSWORD = 'topsecret';
+
+async function findOrCreateUser(name: string, email: string, passwordHash: string, bankAccount?: string) {
   const existing = await db.orm.public.User.first({ email });
 
   if (existing) {
@@ -12,7 +15,7 @@ async function findOrCreateUser(name: string, email: string, bankAccount?: strin
     return existing;
   }
 
-  return db.orm.public.User.create({ name, email, bankAccount });
+  return db.orm.public.User.create({ name, email, passwordHash, bankAccount });
 }
 
 async function findOrCreateCategory(name: string, colour: string) {
@@ -33,9 +36,13 @@ async function addParticipant(expenseId: number, userId: number) {
 }
 
 async function main() {
-  const alice = await findOrCreateUser("Alice", "alice@gmail.com", "BE68 5390 0754 7034");
-  const bob = await findOrCreateUser("Bob", "bob@gmail.com");
-  const jules = await findOrCreateUser("Jules", "jules@gmail.com", "BE71 0961 2345 6769");
+  
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
+
+  const alice = await findOrCreateUser("Alice", "alice@gmail.com", passwordHash, "BE68 5390 0754 7034");
+  const bob = await findOrCreateUser("Bob", "bob@gmail.com", passwordHash);
+  const jules = await findOrCreateUser("Jules", "jules@gmail.com", passwordHash, "BE71 0961 2345 6769");
+
 
   const food = await findOrCreateCategory("Food", "#e67e22");
   const transport = await findOrCreateCategory("Transport", "#3498db");

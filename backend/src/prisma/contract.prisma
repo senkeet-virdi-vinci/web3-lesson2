@@ -26,6 +26,7 @@ model User {
   name        String
   email       String  @unique
   bankAccount String? // optional
+  passwordHash String
 
   transfersOut         Transfer[]    @relation("UserTransfersSource")
   transfersIn          Transfer[]    @relation("UserTransfersTarget")

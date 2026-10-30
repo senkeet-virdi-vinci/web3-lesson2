@@ -23,3 +23,19 @@ function parseWithSchema<T>(schema: z.ZodType<T>, data:unknown): T | false{
   const result = schema.safeParse(data);
   return result.success ? result.data : false;
 }
+
+export interface UserDBO {
+  id: number;
+  name: string;
+  email: string;
+  bankAccount: string | null;
+}
+
+export function userFromDBO(dbo: UserDBO): User {
+  return {
+    id: dbo.id,
+    name: dbo.name,
+    email: dbo.email,
+    bankAccount: dbo.bankAccount,
+  };
+}

@@ -6,6 +6,8 @@ import usersRouter from './routes/user.router.ts';
 import categoriesRouter from "./routes/categories.router.ts";
 import { createYoga } from 'graphql-yoga';
 import { schema } from './src/graphql/schema.ts';
+import authRouter from './routes/auth.router.ts';
+
 
 const yoga = createYoga({
   schema,
@@ -34,6 +36,7 @@ app.get('/ping', (req, res) => {
 app.use('/api/expenses', expensesRouter);
 app.use('/api/users', usersRouter);
 app.use("/api/categories", categoriesRouter);
+app.use('/api/auth', authRouter);
 
 app.use(
   cors({
