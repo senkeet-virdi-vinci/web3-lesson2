@@ -15,6 +15,7 @@ const EXPENSE_QUERY = /* GraphQL */ `
         bankAccount
       }
       participants {
+        id
         name
       }
       category {

@@ -30,7 +30,7 @@ export interface ExpenseListItem {
   description: string;
   amount: number;
   date: string;
-  payer?: { id?: number; name: string };
+  payer: Pick<User, "name">;
   category?: { id?: number; name: string; colour: string } | null;
 }
 
@@ -42,7 +42,6 @@ export interface ExpenseFilter {
 
 export const ExpenseFormSchema = z.object({
   description: z.string().min(1, "Description is required").max(200, "Description cannot exceed 200 characters"),
-  payerId: z.number({ message: "Payer is required" }).int().positive("Payer is required"),
   amount: z.number({ message: "Amount is required" }).positive("Amount must be positive"),
   date: z.string().min(1, "Date is required"),
   participantsRaw: z.string(),

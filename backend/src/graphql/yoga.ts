@@ -34,7 +34,5 @@ export const yoga = createYoga({
     maskError,
     isDev: process.env.NODE_ENV !== 'production',
   },
-  context: async ({ request }) => {
-    graphQLContextFromRequest(request)
-  },
+  context: ({ request }): GraphQLContext => graphQLContextFromRequest(request)
 });

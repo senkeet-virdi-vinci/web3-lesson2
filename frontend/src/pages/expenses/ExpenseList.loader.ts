@@ -2,6 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import type { ExpenseListItem } from "../../types/Expense";
 import { graphqlRequest } from "../../lib/graphql";
 import { redirect } from "react-router";
+import { clearToken } from "../../lib/token";
 
 const EXPENSES_QUERY = /* GraphQL */ `
   query MyExpenses($filter: ExpenseFilter) {
@@ -31,7 +32,7 @@ export async function expenseListLoader({ request }: LoaderFunctionArgs): Promis
   const data = await graphqlRequest<{ me : {expenses: ExpenseListItem[] } | null ;}>(EXPENSES_QUERY, { filter });
 
   if (!data.me) {
-    // clearToken(); to add 
+    clearToken();
     throw redirect('/login');
   }
 

@@ -6,6 +6,7 @@ import { parseNewExpense, type Expense } from '../../types/expense.ts';
 import { GraphQLError } from 'graphql/error';
 import type { GraphQLContext } from '../../types/GraphQLContext.ts';
 import { requireAuth } from './authHelper.ts';
+import { AuthorizationError, NotFoundError } from '../errors/app.error.ts';
 
 export const schema = createSchema<GraphQLContext>({
   typeDefs: /* GraphQL */ `
@@ -80,9 +81,7 @@ resolvers: {
         const expense = await ExpensesService.getExpenseById(args.id);
 
         if (!expense) {
-          throw new GraphQLError('Expense not found', {
-            extensions: { code: 'NOT_FOUND' },
-          });
+          throw new NotFoundError('Expense not found');
         }
 
         // Check if user is involved in this expense (as payer or participant)
@@ -91,9 +90,7 @@ resolvers: {
           expense.participants.some(p => p.id === user.userId);
 
         if (!isInvolved) {
-          throw new GraphQLError("You don't have permission to view this expense", {
-            extensions: { code: 'FORBIDDEN' },
-          });
+          throw new AuthorizationError("You don't have permission to view this expense");
         }
 
         return expense;
@@ -117,9 +114,7 @@ resolvers: {
 
         // User can only create expenses where they are the payer
         if (user.userId !== args.input.payerId) {
-          throw new GraphQLError('You can only create expenses that you paid for', {
-            extensions: { code: 'FORBIDDEN' },
-          });
+          throw new AuthorizationError('You can only create expenses that you paid for');
         }
 
         const newExpense = parseNewExpense(args.input);
@@ -130,8 +125,11 @@ resolvers: {
       },
     },
     User: {
-      expenses: (user, args, ctx) => {
-        requireAuth(ctx);
+      expenses: (user: {id: number}, args, ctx) => {
+        const current = requireAuth(ctx);
+        if (user.id !== current.userId) {
+          throw new AuthorizationError("You can only read your own expenses");
+        }
         return ExpensesService.getExpensesOfUser(user.id, args.filter ?? {});
       },
     },

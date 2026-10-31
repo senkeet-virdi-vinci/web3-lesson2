@@ -6,45 +6,55 @@ export default function ExpenseShow() {
     const expense = useLoaderData() as Expense;
 
 
-    return (
-        <div>
-             <Link to="/expenses">Back to expenses</Link>
+   return (
+    <div className="space-y-6">
+      <Link to="/expenses" className="text-sm text-indigo-600 hover:underline">
+        &larr; Back to the list
+      </Link>
 
-            <h1>{expense.description}</h1>
-            <p>Amount: {expense.amount.toFixed(2)}</p>
-            <p>Date: {new Date(expense.date).toLocaleDateString()}</p>
-
-            <h2>Payer</h2>
-            <p>Name: {expense.payer?.name}</p>
-            <p>Email: {expense.payer?.email}</p>
-            <p>Bank account: {expense.payer?.bankAccount ?? 'Not provided'}</p>
-
-            <h2>Participants</h2>
-            {expense.participants && expense.participants.length > 0 ? (
-                <ul>
-                {expense.participants.map((participant) => (
-                    <li key={participant.id}>{participant.name}</li>
-                ))}
-                </ul>
-            ) : (
-                <p>No participants</p>
-            )}
-
-            <h2>Category</h2>
-            {expense.category ? (
-                <span
-                style={{
-                    backgroundColor: expense.category.colour,
-                    color: '#fff',
-                    padding: '2px 8px',
-                    borderRadius: '4px',
-                }}
-                >
-                {expense.category.name}
-                </span>
-            ) : (
-                <p>None</p>
-            )}
+      <div className="rounded-lg border border-slate-200 bg-white p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">{expense.description}</h2>
+            <p className="mt-1 text-sm text-slate-500">
+              {new Date(expense.date).toLocaleDateString()}
+            </p>
+          </div>
+          <span className="text-2xl font-semibold tabular-nums text-slate-900">
+            {expense.amount.toFixed(2)} €
+          </span>
         </div>
-    );
+
+        {expense.category && (
+          <span
+            className="mt-4 inline-block rounded-full px-2.5 py-1 text-xs font-medium text-white"
+            style={{ backgroundColor: expense.category.colour }}
+          >
+            {expense.category.name}
+          </span>
+        )}
+      </div>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-6">
+        <h3 className="font-semibold text-slate-900">Paid by</h3>
+        <dl className="mt-3 space-y-1 text-sm text-slate-600">
+          <div>{expense.payer?.name}</div>
+          <div>{expense.payer?.email}</div>
+          {/* This field was added to the screen without touching the backend. */}
+          <div>Bank account: {expense.payer?.bankAccount ?? "not provided"}</div>
+        </dl>
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-6">
+        <h3 className="font-semibold text-slate-900">Shared between</h3>
+        <ul className="mt-3 space-y-1 text-sm text-slate-600">
+          {expense.participants?.map((participant) => (
+            <li key={participant.id}>
+              {participant.name} ({participant.email})
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
 }

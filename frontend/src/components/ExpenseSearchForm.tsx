@@ -1,6 +1,10 @@
 import { useForm } from 'react-hook-form';
 import { useSearchParams } from 'react-router';
-import type { Category, User } from '../types/Expense';
+import useUsers from '../hooks/useUser';
+import useCategories from '../hooks/useCategories';
+
+const fieldClass =
+  "mt-1 rounded border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none";
 
 interface SearchFormValues {
   amount?: number;
@@ -8,15 +12,13 @@ interface SearchFormValues {
   categoryId?: string;
 }
 
-interface ExpenseSearchProps {
-  users: User[];
-  categories: Category[];
-}
 
-function ExpenseSearch({ users, categories }: ExpenseSearchProps) {
+function ExpenseSearch() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { users } = useUsers();
+  const { categories } = useCategories();
 
-  const { register, handleSubmit } = useForm<SearchFormValues>({
+  const { register, handleSubmit, reset } = useForm<SearchFormValues>({
     defaultValues: {
       amount: searchParams.get('amount') ? Number(searchParams.get('amount')) : undefined,
       payerId: searchParams.get('payerId') ?? '',
@@ -33,26 +35,36 @@ function ExpenseSearch({ users, categories }: ExpenseSearchProps) {
     setSearchParams(filter);
   };
 
+  const onClear = () => {
+    reset({ amount: undefined, payerId: "", categoryId: "" });
+    setSearchParams({});
+  };
+
   return (
-    <div>
-      <h2>Search expenses</h2>
-      <form onSubmit={handleSubmit(onSubmit)}>
+    <div className="rounded-lg border border-slate-200 bg-white p-4">
+      <h3 className="text-sm font-semibold text-slate-900">Search expenses</h3>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-3 flex flex-wrap items-end gap-3">
         <div>
-          <label htmlFor="search-amount">Amount greater than:</label>
+          <label htmlFor="amount" className="block text-xs font-medium text-slate-600">
+            Minimum amount
+          </label>
           <input
-            id="search-amount"
             type="number"
-            min="0"
-            step="any"
-            placeholder="Enter amount"
-            {...register('amount', { valueAsNumber: true })}
+            step="0.01"
+            id="amount"
+            placeholder="Any"
+            className={fieldClass}
+            {...register("amount", { valueAsNumber: true })}
           />
         </div>
 
         <div>
-          <label htmlFor="search-payer">Payer:</label>
-          <select id="search-payer" {...register('payerId')}>
-            <option value="">All users</option>
+          <label htmlFor="payerId" className="block text-xs font-medium text-slate-600">
+            Payer
+          </label>
+          <select id="payerId" className={fieldClass} {...register("payerId")}>
+            <option value="">All payers</option>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
                 {user.name}
@@ -62,8 +74,10 @@ function ExpenseSearch({ users, categories }: ExpenseSearchProps) {
         </div>
 
         <div>
-          <label htmlFor="search-category">Category:</label>
-          <select id="search-category" {...register('categoryId')}>
+          <label htmlFor="categoryId" className="block text-xs font-medium text-slate-600">
+            Category
+          </label>
+          <select id="categoryId" className={fieldClass} {...register("categoryId")}>
             <option value="">All categories</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -73,7 +87,19 @@ function ExpenseSearch({ users, categories }: ExpenseSearchProps) {
           </select>
         </div>
 
-        <button type="submit">Search</button>
+        <button
+          type="submit"
+          className="rounded bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+        >
+          Search
+        </button>
+        <button
+          type="button"
+          onClick={onClear}
+          className="rounded border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+        >
+          Clear
+        </button>
       </form>
     </div>
   );
