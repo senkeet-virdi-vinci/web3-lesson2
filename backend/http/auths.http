@@ -38,7 +38,7 @@ POST {{auth}}/login
 Content-Type: application/json
 
 {
-  "email": "alice@gmail.com",
+  "email": "bob@gmail.com",
   "password": "topsecret"
 }
 

@@ -5,6 +5,7 @@ import type { User } from '../types/user.ts';
 import { JWT_SECRET } from '../types/auths.ts';
 import type {LoginInput, RegisterInput} from '../types/auths.ts';
 import { db } from '../src/prisma/db.ts';
+import { AuthenticationError, ConflictError } from '../src/errors/app.error.ts';
 
 const SALT_ROUNDS = 10;
 
@@ -14,7 +15,7 @@ export class AuthService {
     const existingUser = await db.orm.public.User.where({ email: input.email }).first();
 
     if (existingUser) {
-      throw new Error('User with this email already exists');
+      throw new ConflictError('User with this email already exists');
     }
 
     // Hash the password. `bcrypt.hash` is deliberately slow — that is the whole
@@ -35,14 +36,14 @@ export class AuthService {
     const userExist = await db.orm.public.User.where({email: input.email}).first();
 
     if(!userExist){
-        throw new Error("Invalid email or password");
+        throw new AuthenticationError("Invalid email or password");
     }
 
     const userHashPassword = userExist.passwordHash;
     const passwordMatch = await bcrypt.compare(input.password ,userHashPassword);
 
     if(!passwordMatch){
-        throw new Error("Invalid email or password");
+        throw new AuthenticationError("Invalid email or password");
     }
 
     return userFromDBO(userExist);

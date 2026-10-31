@@ -1,8 +1,8 @@
 import { createYoga } from 'graphql-yoga';
-
 import { schema } from './schema.ts';
 import type { GraphQLContext } from '../../types/GraphQLContext.ts';
 import { AuthService } from '../../services/auth.service.ts';
+import { maskError } from './errorFormatter.ts';
 
 
 function graphQLContextFromRequest(request: Request): GraphQLContext {
@@ -25,10 +25,16 @@ function graphQLContextFromRequest(request: Request): GraphQLContext {
   }
 }
 
+
 export const yoga = createYoga({
   schema,
   graphqlEndpoint: '/graphql',
   cors: false,
-  maskedErrors: process.env.NODE_ENV === 'production',
-  context: ({ request }): GraphQLContext => graphQLContextFromRequest(request),
+  maskedErrors: {
+    maskError,
+    isDev: process.env.NODE_ENV !== 'production',
+  },
+  context: async ({ request }) => {
+    graphQLContextFromRequest(request)
+  },
 });
