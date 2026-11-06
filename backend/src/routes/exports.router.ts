@@ -22,6 +22,16 @@ router.post('/', async (_req, res) => {
   const { userId } = currentUser(res);
 
   try {
+    const record = await ExportsService.create(userId);
+
+    await exportsQueue.add(
+      'export-expenses',
+      {exportId: record.id, requesterId: userId},
+      {jobId: jobIdForExport(record.id)}
+    );
+
+    res.status(202).json(record)
+
     // TODO 4:
     //  1. Create the receipt row (`ExportsService`).
     //  2. Queue the job on `exportsQueue` with `{ exportId, requesterId }` and
@@ -29,7 +39,6 @@ router.post('/', async (_req, res) => {
     //  3. Respond `res.status(202).json(record)` — not 200 (see docblock above).
     //
     // Do NOT await the job or build the CSV here.
-    throw new Error('TODO 4: not implemented');
   } catch (error) {
     console.error('Error requesting an export:', error);
     res.status(500).json({ error: 'Internal server error' });

@@ -96,6 +96,14 @@ export const exportsWorker = new Worker<ExportJobData>(EXPORTS_QUEUE, processExp
 exportsWorker.on('failed', async (job, error) => {
   console.error(`Export job ${job?.id} failed (attempt ${job?.attemptsMade}):`, error.message);
 
+  if(!job || !isFinalAttempt(job)){
+    return;
+  }
+
+  await ExportsService.setStatus(job.data.exportId, 'failed', {
+    failedReason: error.message,
+  });
+
   // TODO 3 — mark the row failed, but only on the final attempt.
   // Use `isFinalAttempt` from `../queues/exports.queue.ts`; `job` can be
   // undefined, guard for that too:
