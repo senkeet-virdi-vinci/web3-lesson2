@@ -1,7 +1,15 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from "react";
 
-import { clearToken, getToken, setToken } from '../lib/token';
+import { clearToken, getToken, setToken } from "../lib/token";
 
+/**
+ * Who is logged in, for the whole app.
+ *
+ * The token is the only thing the server cares about. `user` is kept beside it
+ * purely so the interface can say "Welcome, John" without asking the server
+ * again — the login response already told us, so we store what we were told
+ * instead of decoding the token ourselves.
+ */
 export interface AuthUser {
   id: number;
   name: string;
@@ -18,7 +26,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USER_KEY = 'auth_user';
+const USER_KEY = "auth_user";
 
 function readStoredUser(): AuthUser | null {
   const raw = localStorage.getItem(USER_KEY);
@@ -32,9 +40,9 @@ function readStoredUser(): AuthUser | null {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // The initialiser runs once, on the first render. Reading storage here rather
-  // than in a useEffect is what stops the app flashing "logged out" for one
-  // frame every time you refresh.
+  // The initialiser runs once, on the first render. Reading localStorage here
+  // rather than in a useEffect is what stops the app flashing "logged out"
+  // for one frame every time you refresh.
   const [token, setTokenState] = useState<string | null>(getToken);
   const [user, setUser] = useState<AuthUser | null>(readStoredUser);
 
@@ -52,7 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  // There is deliberately no expiry timer here. See the note below.
+  // There is deliberately no expiry timer here. A token's expiry is checked by
+  // the server, on every request, and that is the only check that counts. When
+  // the server refuses, `graphqlRequest` clears the token and sends the user to
+  // /login — see src/lib/graphql.ts.
   return (
     <AuthContext.Provider
       value={{ user, token, login, logout, isAuthenticated: !!user && !!token }}
@@ -62,11 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 }

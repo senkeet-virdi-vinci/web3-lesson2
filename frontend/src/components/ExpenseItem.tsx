@@ -1,5 +1,10 @@
 /**
- * A simple component to display an expense item
+ * One row of the expense list.
+ *
+ * Note what this component does NOT show any more: participants, emails and
+ * bank accounts. The list query does not ask for them, so they are not in the
+ * type either — the compiler now enforces the boundary between what the list
+ * screen needs and what the detail screen needs.
  */
 
 import { Link } from "react-router";

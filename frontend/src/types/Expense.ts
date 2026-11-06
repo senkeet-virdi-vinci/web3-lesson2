@@ -1,48 +1,38 @@
-import { z } from "zod";
+import * as z from "zod";
 
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  bankAccount: string | null;
-}
+import { type User } from "./User";
+import { type Category } from "./Category";
 
-export interface Category {
-  id: number;
-  name: string;
-  colour: string;
-}
-
+/** The full expense, as the detail page asks for it. */
 export interface Expense {
-  id: string;
+  id: number;
   date: string;
   description: string;
   amount: number;
-  payerId: number;
-  payer?: User;
-  categoryId?: number | null;
-  category?: Category | null;
-  participants?: User[];
+  payer: User;
+  participants: User[];
+  category?: Category;
 }
 
+/**
+ * What the list page asks for. It is a strict subset of `Expense` — the list
+ * query simply does not select the other fields, so the types say so too.
+ */
 export interface ExpenseListItem {
-  id: string;
+  id: number;
+  date: string;
   description: string;
   amount: number;
-  date: string;
   payer: Pick<User, "name">;
-  category?: { id?: number; name: string; colour: string } | null;
+  category?: Category;
 }
 
-export interface ExpenseFilter {
-  amount?: number;
-  payerId?: number;
-  categoryId?: number;
-}
-
+// `payerId` is gone from this schema on purpose. The payer is no longer
+// something the form collects — it is whoever is logged in, and the server
+// takes that from the token rather than from anything the browser sends.
 export const ExpenseFormSchema = z.object({
-  description: z.string().min(1, "Description is required").max(200, "Description cannot exceed 200 characters"),
-  amount: z.number({ message: "Amount is required" }).positive("Amount must be positive"),
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().positive("Amount must be positive"),
   date: z.string().min(1, "Date is required"),
   participantsRaw: z.string(),
   categoryId: z.number().int().optional(),
@@ -50,6 +40,7 @@ export const ExpenseFormSchema = z.object({
 
 export type ExpenseFormValues = z.infer<typeof ExpenseFormSchema>;
 
+// What we send to the API: participants are IDs, payer/category are resolved server-side.
 export interface NewExpense {
   description: string;
   amount: number;

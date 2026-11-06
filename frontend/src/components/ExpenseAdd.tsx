@@ -1,22 +1,18 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { NewExpense } from "../types/Expense";
+
+/** Everything the form knows. The payer is added by the page, from the token. */
+export type NewExpenseFormOutput = Omit<NewExpense, "payerId">;
 import { ExpenseFormSchema, type ExpenseFormValues } from "../types/Expense";
 import useCategories from "../hooks/useCategories";
-
-export type NewExpenseFormOutput = Omit<NewExpense, "payerId">;
 
 interface ExpenseAddProps {
   expenseAdd: (expense: NewExpenseFormOutput) => Promise<void>;
 }
 
 function ExpenseAdd({ expenseAdd }: ExpenseAddProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<ExpenseFormValues>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ExpenseFormValues>({
     resolver: zodResolver(ExpenseFormSchema),
   });
   const { categories, loading: categoriesLoading } = useCategories();
@@ -25,17 +21,14 @@ function ExpenseAdd({ expenseAdd }: ExpenseAddProps) {
     const newExpense: NewExpenseFormOutput = {
       description: data.description,
       amount: data.amount,
-      date: new Date(data.date).toISOString(),
+      date: data.date,
       participants: data.participantsRaw
-        ? data.participantsRaw
-            .split(",")
-            .map((s) => parseInt(s.trim(), 10))
-            .filter((n) => !isNaN(n))
+        ? data.participantsRaw.split(',').map((s) => parseInt(s.trim(), 10)).filter((n) => !isNaN(n))
         : [],
       categoryId: data.categoryId,
     };
     await expenseAdd(newExpense);
-    reset();
+    reset(); // clear the form
   };
 
   const fieldClass =
@@ -125,6 +118,5 @@ function ExpenseAdd({ expenseAdd }: ExpenseAddProps) {
     </div>
   );
 }
-
 
 export default ExpenseAdd;
