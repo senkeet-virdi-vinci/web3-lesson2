@@ -88,6 +88,7 @@ async function processExportJob(job: Job<ExportJobData>): Promise<{ rowCount: nu
  * does not care which process it lives in.
  */
 export const exportsWorker = new Worker<ExportJobData>(EXPORTS_QUEUE, processExportJob, {
+
   connection: createRedisConnection(),
   concurrency: 2,
 });

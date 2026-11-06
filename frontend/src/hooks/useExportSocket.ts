@@ -72,6 +72,30 @@ export function useExportSocket(exportId: number | null): ExportStream {
         failedReason?: string;
       };
 
+      if (message.exportId !== exportId) {
+        return;
+      }
+
+      if(message.type == "progress" && message.data){
+        setProgress(message.data)
+        return;
+      }
+
+      setProgress(null);
+
+      if(message.type == "failed"){
+        setError(message.failedReason ?? "The export failed");
+        setRecord((previous) =>
+          previous ? { ...previous, status: "failed" } : previous
+        );
+      } else {
+        void apiRequest<Export>(`/api/exports/${exportId}`).then((fresh) => {
+          if (!cancelled) setRecord(fresh);
+        });
+      }
+
+      socket.close();
+
       // TODO 6 — act on `message`:
       //  1. FIRST: `if (message.exportId !== exportId) return;` — must run
       //     before the type switch, or a sibling export's 'completed' closes

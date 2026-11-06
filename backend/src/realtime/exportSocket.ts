@@ -62,6 +62,13 @@ export function attachExportSocket(server: Server): WebSocketServer {
 
   /** Sends one message to one user's open sockets — see `viewers` above. */
   function sendToUser(userId: number, payload: unknown): void {
+    const text = JSON.stringify(payload);
+    for(const [client, viewerId] of viewers) {
+      if(viewerId === userId && client.readyState === client.OPEN){
+        client.send(text);
+      }
+    }
+
     // TODO 5 — walk `viewers`, send `payload` (JSON.stringify'd — a frame is
     // text) only where `viewerId === userId` AND `client.readyState ===
     // client.OPEN` (a closing socket is still in the map; sending to one throws).
