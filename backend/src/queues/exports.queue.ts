@@ -31,6 +31,14 @@ export interface ExportJobData {
 export const exportsQueue = new Queue<ExportJobData>(EXPORTS_QUEUE, {
   connection: createRedisConnection(),
   defaultJobOptions: {
+    attempts: 3,
+
+    backoff: {type: 'exponential', delay: 1000},
+
+    removeOnComplete: {age : 3600},
+
+    removeOnFail: {count: 100},
+
     // TODO 1 — four options, all in the BullMQ "Jobs" guide:
     // https://docs.bullmq.io/guide/jobs
     //

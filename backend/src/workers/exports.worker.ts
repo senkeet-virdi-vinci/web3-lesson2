@@ -41,6 +41,27 @@ function sleep(ms: number): Promise<void> {
 async function processExportJob(job: Job<ExportJobData>): Promise<{ rowCount: number }> {
   const { exportId, requesterId } = job.data;
 
+  await ExportsService.setStatus(exportId, "running");
+
+  await sleep(800);
+  await job.updateProgress({ step: 'reading expenses', percent: 10 })
+
+  const expenses = await ExpensesService.getExpensesOfUser(requesterId);
+
+  await sleep(1500);
+  await job.updateProgress({ step: 'building the file', percent: 60 })
+  const csv = ExportsService.buildCsv(expenses);
+
+  await sleep(1500);
+  await job.updateProgress({ step: 'storing the file', percent: 90 });
+
+  await ExportsService.setStatus(exportId, 'completed', {
+    rowCount: expenses.length,
+    csv,
+  });
+
+  return {rowCount: expenses.length};
+
   // TODO 2 — the sequence (every method already exists on `ExportsService`
   // or `ExpensesService`; this is about order, not invention):
   //
@@ -55,7 +76,6 @@ async function processExportJob(job: Job<ExportJobData>): Promise<{ rowCount: nu
   //  7. Return `{ rowCount }`.
   //
   // Do NOT catch errors here — BullMQ must see the throw to retry (TODO 1).
-  throw new Error('TODO 2: not implemented');
 }
 
 /**
