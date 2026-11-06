@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { User } from '../types/Expense';
 import { apiRequest } from '../lib/rest';
+import type { User } from '../types/User';
 
 
 function useUsers() {
